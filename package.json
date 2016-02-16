@@ -21,5 +21,8 @@
   "bugs": {
     "url": "https://github.com/pandastrike/docker-proxy/issues"
   },
-  "homepage": "https://github.com/pandastrike/docker-proxy#readme"
+  "homepage": "https://github.com/pandastrike/docker-proxy#readme",
+  "dependencies": {
+    "dockerode": "^2.2.9"
+  }
 }
