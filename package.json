@@ -1,0 +1,25 @@
+{
+  "name": "docker-proxy",
+  "version": "1.0.0-alpha-00",
+  "description": "Single-minded reverse proxy that uses the Docker API to build its routing table.",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "coffee test/test.coffee"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pandastrike/docker-proxy.git"
+  },
+  "keywords": [
+    "docker",
+    "proxy",
+    "port",
+    "mapping"
+  ],
+  "author": "Dan Yoder",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/pandastrike/docker-proxy/issues"
+  },
+  "homepage": "https://github.com/pandastrike/docker-proxy#readme"
+}
