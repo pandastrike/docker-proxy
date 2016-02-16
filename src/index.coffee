@@ -7,9 +7,14 @@ Proxy =
   start: (_port) ->
     http.createServer (request, response) ->
       {protocol, path, method, headers} = request
-      [host, port] = Routes.find request.headers.host
-      request.pipe http.request {protocol, host, port, path, method, headers},
-        (_response) -> _response.pipe response
+      # if (route = Routes.find request.headers.host)?
+      if (route = Routes.find "localhost:80")?
+        [host, port] = route
+        request.pipe http.request {protocol, host, port, path, method, headers},
+          (_response) -> _response.pipe response
+      else
+        response.statusCode = 503
+        response.end()
     .listen _port, ->
       console.log "Listening on port #{_port}"
 
@@ -19,10 +24,12 @@ Routes =
 
   update: (containers) ->
     for container in containers
-      for port in container.Ports
-        {IP, PrivatePort, PublicPort} = port
-        if PrivatePort == 80
-          Routes.add "localhost:80", [ IP, PublicPort ]
+      [name] = container.Image.split(":")
+      if name != "docker-proxy"
+        for port in container.Ports
+          {IP, PrivatePort, PublicPort} = port
+          if PrivatePort == 80
+            Routes.add "localhost:80", [ IP, PublicPort ]
 
   find: (host) ->
     alternatives = _table[host]
@@ -30,7 +37,7 @@ Routes =
       Routes.choose alternatives
 
   choose: (alternatives) ->
-    index = Math.round(Math.random() * alternatives.length - 1)
+    index = Math.round(Math.random() * (alternatives.length - 1))
     alternatives[index]
 
   add: (from, to) ->
@@ -39,6 +46,8 @@ Routes =
 docker.listContainers (error, containers) ->
   if !error?
     Routes.update containers
-    Proxy.start 80
+    console.log "Routes"
+    console.log Routes._table
+    Proxy.start if process.argv[2]? then process.argv[2] else 80
   else
     console.error error
