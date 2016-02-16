@@ -4,6 +4,7 @@
   "description": "Single-minded reverse proxy that uses the Docker API to build its routing table.",
   "main": "lib/index.js",
   "scripts": {
+    "start": "coffee src/index.coffee",
     "test": "coffee test/test.coffee"
   },
   "repository": {

@@ -11,7 +11,7 @@ Proxy =
       request.pipe http.request {protocol, host, port, path, method, headers},
         (_response) -> _response.pipe response
     .listen _port, ->
-      console.log "Listening on port #{port}"
+      console.log "Listening on port #{_port}"
 
 Routes =
 
@@ -22,7 +22,7 @@ Routes =
       for port in container.Ports
         {IP, PrivatePort, PublicPort} = port
         if PrivatePort == 80
-          Routes.add "localhost:1337", [ IP, PublicPort ]
+          Routes.add "localhost:80", [ IP, PublicPort ]
 
   find: (host) ->
     alternatives = _table[host]
@@ -39,6 +39,6 @@ Routes =
 docker.listContainers (error, containers) ->
   if !error?
     Routes.update containers
-    Proxy.start 1337
+    Proxy.start 80
   else
     console.error error
