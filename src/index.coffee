@@ -1,6 +1,42 @@
 http = require "http"
-Docker = (require "dockerode")
-docker = new Docker
+{promise, all} = require "when"
+DockerAPI = (require "dockerode")
+dockerAPI = new DockerAPI
+
+Docker =
+
+  listContainers: ->
+    promise (resolve, reject) ->
+      dockerAPI.listContainers (error, containers) ->
+        if !error?
+          resolve all (for container in containers
+                        Container.inspect Container.normalize container)
+        else
+          reject error
+
+Container =
+
+  normalize: (container) ->
+    id: container.Id
+    locations: for port in container.Ports
+      address: port.IP
+      ports:
+        public: port.PublicPort
+        private: port.PrivatePort
+
+  inspect: (container) ->
+    promise (resolve, reject) ->
+      dockerAPI.getContainer container.id
+      .inspect (error, details) ->
+        if !error?
+          container.domain =  "web.foobar.com"
+          # container.domain = if details.Config.Domainname == ''
+          #   undefined
+          # else
+          #   details.Config.Domainname
+          resolve container
+        else
+          reject error
 
 Proxy =
 
@@ -8,7 +44,7 @@ Proxy =
     http.createServer (request, response) ->
       {protocol, path, method, headers} = request
       # if (route = Routes.find request.headers.host)?
-      if (route = Routes.find "localhost:80")?
+      if (route = Routes.find "web.foobar.com")?
         [host, port] = route
         request.pipe http.request {protocol, host, port, path, method, headers},
           (_response) -> _response.pipe response
@@ -23,13 +59,10 @@ Routes =
   _table: (_table = {})
 
   update: (containers) ->
-    for container in containers
-      [name] = container.Image.split(":")
-      if name != "docker-proxy"
-        for port in container.Ports
-          {IP, PrivatePort, PublicPort} = port
-          if PrivatePort == 80
-            Routes.add "localhost:80", [ IP, PublicPort ]
+    for {domain, locations} in containers
+      if domain?
+        for {address, ports} in locations when ports.private == 80
+          Routes.add domain, [ address, ports.public ]
 
   find: (host) ->
     alternatives = _table[host]
@@ -43,11 +76,9 @@ Routes =
   add: (from, to) ->
     (_table[from] ?= []).push to
 
-docker.listContainers (error, containers) ->
-  if !error?
+Docker.listContainers()
+.then (containers) ->
     Routes.update containers
-    console.log "Routes"
-    console.log Routes._table
     Proxy.start if process.argv[2]? then process.argv[2] else 80
-  else
-    console.error error
+.catch (error) ->
+  console.error error

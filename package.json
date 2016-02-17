@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/pandastrike/docker-proxy#readme",
   "dependencies": {
-    "dockerode": "^2.2.9"
+    "dockerode": "^2.2.9",
+    "when": "^3.7.7"
   }
 }
