@@ -1,20 +1,19 @@
 http = require "http"
 {promise, all} = require "when"
-DockerAPI = (require "dockerode")
-dockerAPI = new DockerAPI
+docker = new (require "dockerode")
 
-Docker =
 
-  listContainers: ->
+
+Container =
+
+  list: ->
     promise (resolve, reject) ->
-      dockerAPI.listContainers (error, containers) ->
+      docker.listContainers (error, containers) ->
         if !error?
           resolve all (for container in containers
                         Container.inspect Container.normalize container)
         else
           reject error
-
-Container =
 
   normalize: (container) ->
     id: container.Id
@@ -26,7 +25,7 @@ Container =
 
   inspect: (container) ->
     promise (resolve, reject) ->
-      dockerAPI.getContainer container.id
+      docker.getContainer container.id
       .inspect (error, details) ->
         if !error?
           container.domain =  "web.foobar.com"
@@ -76,7 +75,7 @@ Routes =
   add: (from, to) ->
     (_table[from] ?= []).push to
 
-Docker.listContainers()
+Container.list()
 .then (containers) ->
     Routes.update containers
     Proxy.start if process.argv[2]? then process.argv[2] else 80
